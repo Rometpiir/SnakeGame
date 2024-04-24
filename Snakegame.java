@@ -1,187 +1,163 @@
-import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Random;
-import javax.swing.*;
+import turtle
+import random
+import time
 
-public class SnakeGame extends JPanel implements ActionListener, KeyListener {
-    private class Tile {
-        int x;
-        int y;
 
-        Tile(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-    }  
+screen = turtle.Screen()
+screen.title('Snake made in Python')
+screen.setup(width = 800, height = 700)
+screen.tracer(0)
+turtle.bgcolor('turquoise')
 
-    int boardWidth;
-    int boardHeight;
-    int tileSize = 25;
-    
-    //snake
-    Tile snakeHead;
-    ArrayList<Tile> snakeBody;
 
-    //food
-    Tile food;
-    Random random;
+turtle.speed(5)
+turtle.pensize(4)
+turtle.penup()
+turtle.goto(-310,250)
+turtle.pendown()
+turtle.color('black')
+turtle.forward(600)
+turtle.right(90)
+turtle.forward(500)
+turtle.right(90)
+turtle.forward(600)
+turtle.right(90)
+turtle.forward(500)
+turtle.penup()
+turtle.hideturtle()
 
-    //game logic
-    int velocityX;
-    int velocityY;
-    Timer gameLoop;
 
-    boolean gameOver = false;
+score = 0
+delay = 0.1
 
-    SnakeGame(int boardWidth, int boardHeight) {
-        this.boardWidth = boardWidth;
-        this.boardHeight = boardHeight;
-        setPreferredSize(new Dimension(this.boardWidth, this.boardHeight));
-        setBackground(Color.black);
-        addKeyListener(this);
-        setFocusable(true);
 
-        snakeHead = new Tile(5, 5);
-        snakeBody = new ArrayList<Tile>();
 
-        food = new Tile(10, 10);
-        random = new Random();
-        placeFood();
+snake = turtle.Turtle()
+snake.speed(0)
+snake.shape('square')
+snake.color("black")
+snake.penup()
+snake.goto(0,0)
+snake.direction = 'stop'
 
-        velocityX = 1;
-        velocityY = 0;
+
+
+fruit = turtle.Turtle()
+fruit.speed(0)
+fruit.shape('circle')
+fruit.color('red')
+fruit.penup()
+fruit.goto(30,30)
+
+old_fruit=[]
+
+
+scoring = turtle.Turtle()
+scoring.speed(0)
+scoring.color("black")
+scoring.penup()
+scoring.hideturtle()
+scoring.goto(0,300)
+scoring.write("Score :",align="center",font=("Courier",24,"bold"))
+
+
+
+def snake_go_up():
+    if snake.direction != "down":
+        snake.direction = "up"
+
+def snake_go_down():
+    if snake.direction != "up":
+        snake.direction = "down"
+
+def snake_go_left():
+    if snake.direction != "right":
+        snake.direction = "left"
+
+def snake_go_right():
+    if snake.direction != "left":
+        snake.direction = "right"
+
+def snake_move():
+    if snake.direction == "up":
+        y = snake.ycor()
+        snake.sety(y + 20)
+
+    if snake.direction == "down":
+        y = snake.ycor()
+        snake.sety(y - 20)
+
+    if snake.direction == "left":
+        x = snake.xcor()
+        snake.setx(x - 20)
+
+    if snake.direction == "right":
+        x = snake.xcor()
+        snake.setx(x + 20)
+
+
+screen.listen()
+screen.onkeypress(snake_go_up, "Up")
+screen.onkeypress(snake_go_down, "Down")
+screen.onkeypress(snake_go_left, "Left")
+screen.onkeypress(snake_go_right, "Right")
+
+
+
+while True:
+        screen.update()
+
+        if snake.distance(fruit)< 20:
+                x = random.randint(-290,270)
+                y = random.randint(-240,240)
+                fruit.goto(x,y)
+                scoring.clear()
+                score+=1
+                scoring.write("Score:{}".format(score),align="center",font=("Courier",24,"bold"))
+                delay-=0.001
+                
+
+                new_fruit = turtle.Turtle()
+                new_fruit.speed(0)
+                new_fruit.shape('square')
+                new_fruit.color('red')
+                new_fruit.penup()
+                old_fruit.append(new_fruit)
+                
+
+
         
-		//game timer
-		gameLoop = new Timer(100, this); //how long it takes to start timer, milliseconds gone between frames 
-        gameLoop.start();
-	}	
-    
-    public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		draw(g);
-	}
+        for index in range(len(old_fruit)-1,0,-1):
+                a = old_fruit[index-1].xcor()
+                b = old_fruit[index-1].ycor()
 
-	public void draw(Graphics g) {
-        //Grid Lines
-        for(int i = 0; i < boardWidth/tileSize; i++) {
-            //(x1, y1, x2, y2)
-            g.drawLine(i*tileSize, 0, i*tileSize, boardHeight);
-            g.drawLine(0, i*tileSize, boardWidth, i*tileSize); 
-        }
+                old_fruit[index].goto(a,b)
+                                     
+        if len(old_fruit)>0:
+                a= snake.xcor()
+                b = snake.ycor()
+                old_fruit[0].goto(a,b)
+        snake_move()
 
-        //Food
-        g.setColor(Color.red);
-        // g.fillRect(food.x*tileSize, food.y*tileSize, tileSize, tileSize);
-        g.fill3DRect(food.x*tileSize, food.y*tileSize, tileSize, tileSize, true);
 
-        //Snake Head
-        g.setColor(Color.green);
-        // g.fillRect(snakeHead.x, snakeHead.y, tileSize, tileSize);
-        // g.fillRect(snakeHead.x*tileSize, snakeHead.y*tileSize, tileSize, tileSize);
-        g.fill3DRect(snakeHead.x*tileSize, snakeHead.y*tileSize, tileSize, tileSize, true);
-        
-        //Snake Body
-        for (int i = 0; i < snakeBody.size(); i++) {
-            Tile snakePart = snakeBody.get(i);
-            // g.fillRect(snakePart.x*tileSize, snakePart.y*tileSize, tileSize, tileSize);
-            g.fill3DRect(snakePart.x*tileSize, snakePart.y*tileSize, tileSize, tileSize, true);
-		}
+        if snake.xcor()>280 or snake.xcor()< -300 or snake.ycor()>240 or snake.ycor()<-240:
+                time.sleep(1)
+                screen.clear()
+                screen.bgcolor('turquoise')
+                scoring.goto(0,0)
+                scoring.write("   GAME OVER \n Your Score is {}".format(score),align="center",font=("Courier",30,"bold"))
+              
 
-        //Score
-        g.setFont(new Font("Arial", Font.PLAIN, 16));
-        if (gameOver) {
-            g.setColor(Color.red);
-            g.drawString("Game Over: " + String.valueOf(snakeBody.size()), tileSize - 16, tileSize);
-        }
-        else {
-            g.drawString("Score: " + String.valueOf(snakeBody.size()), tileSize - 16, tileSize);
-        }
-	}
+        for food in old_fruit:
+                if food.distance(snake) < 20:
+                        time.sleep(1)
+                        screen.clear()
+                        screen.bgcolor('turquoise')
+                        scoring.goto(0,0)
+                        scoring.write("    GAME OVER \n Your Score is {}".format(score),align="center",font=("Courier",30,"bold"))
 
-    public void placeFood(){
-        food.x = random.nextInt(boardWidth/tileSize);
-		food.y = random.nextInt(boardHeight/tileSize);
-	}
 
-    public void move() {
-        //eat food
-        if (collision(snakeHead, food)) {
-            snakeBody.add(new Tile(food.x, food.y));
-            placeFood();
-        }
+                
+        time.sleep(delay)
 
-        //move snake body
-        for (int i = snakeBody.size()-1; i >= 0; i--) {
-            Tile snakePart = snakeBody.get(i);
-            if (i == 0) { //right before the head
-                snakePart.x = snakeHead.x;
-                snakePart.y = snakeHead.y;
-            }
-            else {
-                Tile prevSnakePart = snakeBody.get(i-1);
-                snakePart.x = prevSnakePart.x;
-                snakePart.y = prevSnakePart.y;
-            }
-        }
-        //move snake head
-        snakeHead.x += velocityX;
-        snakeHead.y += velocityY;
-
-        //game over conditions
-        for (int i = 0; i < snakeBody.size(); i++) {
-            Tile snakePart = snakeBody.get(i);
-
-            //collide with snake head
-            if (collision(snakeHead, snakePart)) {
-                gameOver = true;
-            }
-        }
-
-        if (snakeHead.x*tileSize < 0 || snakeHead.x*tileSize > boardWidth || //passed left border or right border
-            snakeHead.y*tileSize < 0 || snakeHead.y*tileSize > boardHeight ) { //passed top border or bottom border
-            gameOver = true;
-        }
-    }
-
-    public boolean collision(Tile tile1, Tile tile2) {
-        return tile1.x == tile2.x && tile1.y == tile2.y;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) { //called every x milliseconds by gameLoop timer
-        move();
-        repaint();
-        if (gameOver) {
-            gameLoop.stop();
-        }
-    }  
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        // System.out.println("KeyEvent: " + e.getKeyCode());
-        if (e.getKeyCode() == KeyEvent.VK_UP && velocityY != 1) {
-            velocityX = 0;
-            velocityY = -1;
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_DOWN && velocityY != -1) {
-            velocityX = 0;
-            velocityY = 1;
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_LEFT && velocityX != 1) {
-            velocityX = -1;
-            velocityY = 0;
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_RIGHT && velocityX != -1) {
-            velocityX = 1;
-            velocityY = 0;
-        }
-    }
-
-    //not needed
-    @Override
-    public void keyTyped(KeyEvent e) {}
-
-    @Override
-    public void keyReleased(KeyEvent e) {}
-}
+turtle.Terminator()
